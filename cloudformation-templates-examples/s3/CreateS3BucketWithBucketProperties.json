@@ -1,0 +1,139 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Cloudformation template to create S3 bucket with Verionsing ,Logging ,Encryption and LifeCycle Configuration enabled.",
+    "Parameters": {
+        "pNewBucketName": {
+            "Description": "Name for the S3 Bucket.",
+            "ConstraintDescription": "The Bucket Name should contain only lowercase,letters,numbers,periods(.) and dashed(-).",
+            "AllowedPattern": "[a-z0-9-.]*",
+            "Type": "String",
+            "MaxLength": "120",
+            "MinLength": "5"
+        },
+        "pEnvironment": {
+            "Default": "dev",
+            "Description": "Select the Environment in which you want to create S3 bucket.",
+            "Type": "String",
+            "AllowedValues": [
+                "dev",
+                "tst"
+            ]
+        },
+        "pResourceCreator": {
+            "Description": "Name of the Person whoccreated rresource.",
+            "ConstraintDescription": "Resource Name should contain only lowercase,letters,numbers,periods(.) and dashed(-).",
+            "AllowedPattern": "[a-z0-9-.]*",
+            "Type": "String",
+            "MaxLength": "30",
+            "MinLength": "5"
+        }
+    },
+    "Mappings": {
+        "EnvironmentMap": {
+            "dev": {
+                "NoOfDaysLifeCycleTransitionToStandardIA": "30",
+                "NoOfDaysLifeCycleTransitionToGlacier": "60",
+                "NoOfDaysLifeCycleExpiration": "90"
+            },
+            "tst": {
+                "NoOfDaysLifeCycleTransitionToStandardIA": "60",
+                "NoOfDaysLifeCycleTransitionToGlacier": "90",
+                "NoOfDaysLifeCycleExpiration": "180"
+            }
+        }
+    },
+    "Resources": {
+        "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": {
+                    "Ref": "pNewBucketName"
+                },
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "S3-bucket-lifecycle-config-rule",
+                            "Status": "Enabled",
+                            "ExpirationInDays": {
+                                "Fn::FindInMap": [
+                                    "EnvironmentMap",
+                                    {
+                                        "Ref": "pEnvironment"
+                                    },
+                                    "NoOfDaysLifeCycleExpiration"
+                                ]
+                            },
+                            "Transitions": [
+                                {
+                                    "StorageClass": "STANDARD_IA",
+                                    "TransitionInDays": {
+                                        "Fn::FindInMap": [
+                                            "EnvironmentMap",
+                                            {
+                                                "Ref": "pEnvironment"
+                                            },
+                                            "NoOfDaysLifeCycleTransitionToStandardIA"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "StorageClass": "GLACIER",
+                                    "TransitionInDays": {
+                                        "Fn::FindInMap": [
+                                            "EnvironmentMap",
+                                            {
+                                                "Ref": "pEnvironment"
+                                            },
+                                            "NoOfDaysLifeCycleTransitionToGlacier"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "BucketEncryption": {
+                    "ServerSideEncryptionConfiguration": [
+                        {
+                            "ServerSideEncryptionByDefault": {
+                                "SSEAlgorithm": "AES256"
+                            }
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                },
+                "Tags": [
+                    {
+                        "Key": "Environment",
+                        "Value": {
+                            "Ref": "pEnvironment"
+                        }
+                    },
+                    {
+                        "Key": "ResourcePurpose",
+                        "Value": {
+                            "Ref": "AWS::StackName"
+                        }
+                    },
+                    {
+                        "Key": "ResourceCreator",
+                        "Value": {
+                            "Ref": "pResourceCreator"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "BucketName": {
+            "Value": {
+                "Ref": "S3Bucket"
+            },
+            "Description": "Name of the sample Amazon S3 bucket."
+        }
+    }
+}
