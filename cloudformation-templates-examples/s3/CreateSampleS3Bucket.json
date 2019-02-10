@@ -1,0 +1,33 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Cloudformation template to create Sample S3 bucket.",
+    "Parameters": {
+        "pNewBucketName": {
+            "Description": "Name for the S3 Bucket.",
+            "ConstraintDescription": "The Bucket Name should contain only lowercase,letters,numbers,periods(.) and dashed(-).",
+            "AllowedPattern": "[a-z0-9-.]*",
+            "Type": "String",
+            "MaxLength": "120",
+            "MinLength": "5"
+        }
+    },
+    "Resources": {
+        "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": {
+                    "Ref": "pNewBucketName"
+                },
+                "AccessControl": "Private"
+            }
+        }
+    },
+    "Outputs": {
+        "BucketName": {
+            "Value": {
+                "Ref": "S3Bucket"
+            },
+            "Description": "Name of the sample Amazon S3 bucket."
+        }
+    }
+}
