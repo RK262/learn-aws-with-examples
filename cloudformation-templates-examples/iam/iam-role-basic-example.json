@@ -1,0 +1,98 @@
+{
+    "AWSTemplateFormatVersion":"2010-09-09",
+    "Description" : "Cloudformation template to create IAM role for EC2 instance to provide access to S3 bucket.",
+    "Outputs":{
+        "outputIAMRoleARN":{
+            "Description" : "Output IAM Role Name",
+            "Value": {
+                "Fn::GetAtt" : [
+                    "rIAMRole",
+                    "Arn"
+                ]
+            }
+        }
+    },
+    "Parameters":{
+        "pIAMRoleName": {
+            "Description" : "Input Role Name",
+            "Type" : "String"
+        }
+    },
+    "Resources":{
+        "rIAMRole":{
+            "Type": "AWS::IAM::Role",
+            "Properties":{
+                "AssumeRolePolicyDocument":{
+                    "Version" : "2012-10-17",
+                    "Statement" : [
+                        {
+                            "Effect": "Allow",
+                            "Principal" : {
+                                "Service" : [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action" : [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "RoleName": {
+                    "Ref" : "pIAMRoleName"
+                },
+                "Policies" : [
+                    {
+                        "PolicyName" : {
+                            "Fn::Join" : [
+                                "-",
+                                [
+                                    {
+                                        "Ref" : "pIAMRoleName"
+                                    },
+                                    "ec2-cft-access"
+                                ]
+                            ]
+                        },
+                        "PolicyDocument" : {
+                            "Version" : "2012-10-17",
+                            "Statement" : [
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "cloudformation:*"
+                                    ],
+                                    "Resource" : "*"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName" : {
+                            "Fn::Join" : [
+                                "-",
+                                [
+                                    {
+                                        "Ref" : "pIAMRoleName"
+                                    },
+                                    "ec2-s3-access"
+                                ]
+                            ]
+                        },
+                        "PolicyDocument" : {
+                            "Version" :"2012-10-17",
+                            "Statement" : [
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "s3:*"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
